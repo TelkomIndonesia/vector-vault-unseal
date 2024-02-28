@@ -1,0 +1,35 @@
+sources:
+  vault_seal_status:
+    type: http_client
+    endpoint: ${VAULT_ADDR}/v1/sys/seal-status
+    scrape_interval_secs: ${VAULT_SEAL_STATUS_CHECK_INTERVAL:-5}
+    decoding:
+      codec: json
+
+transforms:
+  vault_seal_status_route:
+    type: route
+    inputs:
+      - vault_seal_status
+    route:
+      sealed: ".sealed == true"
+
+  vault_unseal_payload:
+    type: remap
+    inputs:
+      - vault_seal_status_route.sealed
+    source: |
+      . = { "key" : "${VAULT_UNSEAL_KEY}" }
+
+sinks:
+  vault_unseal:
+    type: http
+    inputs:
+      - vault_unseal_payload
+    uri: ${VAULT_ADDR}/v1/sys/unseal
+    batch:
+      max_events: 1
+    encoding:
+      codec: json
+    framing:
+      method: bytes

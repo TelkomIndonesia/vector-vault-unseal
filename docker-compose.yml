@@ -1,0 +1,8 @@
+services:
+  vector: 
+    build: .
+    restart: unless-stopped
+    environment:
+      VAULT_ADDR:
+      VAULT_UNSEAL_KEY:
+      VAULT_SEAL_STATUS_CHECK_INTERVAL:
